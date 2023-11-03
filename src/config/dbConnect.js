@@ -1,8 +1,7 @@
 import mongoose from "mongoose";
+import "dotenv/config";
 
-mongoose.connect(
-    "mongodb+srv://admin:admin@cluster0.gssk2ux.mongodb.net/roadmapdb?retryWrites=true&w=majority"
-);
+mongoose.connect(process.env.DB_CONNECTION_STRING);
 
 let db = mongoose.connection;
 
