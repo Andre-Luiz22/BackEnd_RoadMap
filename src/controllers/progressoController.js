@@ -53,9 +53,11 @@ class ProgressosController {
     static listarProgressoByUserId = async (req, res) => {
         const userId = req.params.userId;
         try {
-            const progressoEncontrado = await progressos.findOne({
-                user: userId,
-            });
+            const progressoEncontrado = await progressos
+                .findOne({
+                    user: userId,
+                })
+                .populate("user");
             if (progressoEncontrado !== null) {
                 res.status(200).json(progressoEncontrado);
             } else {
