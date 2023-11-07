@@ -1,4 +1,8 @@
 import { users } from "../models/index.js";
+import bcrypt from "bcrypt";
+
+const saltRounds = Math.floor(Math.random() * (16 - 10 + 1)) + 10;
+const salt = bcrypt.genSaltSync(saltRounds);
 
 class UserController {
     static listarUsers = async (req, res) => {
@@ -15,33 +19,78 @@ class UserController {
 
     static criaUser = async (req, res) => {
         try {
-            const novoUser = await users.create(req.body);
-            res.status(201).json({
-                message: "Usuário criado com sucesso",
-                novoUser,
-            });
-        } catch (erro) {
-            res.status(500).json({
-                message: "Algo deu errado",
-            });
-        }
-    };
+            const { email, apelido, senha } = req.body;
 
-    static listarUserByApelido = async (req, res) => {
-        const apelido = req.params.apelido;
-        try {
-            const userEncotrado = await users.findOne({ apelido: apelido });
-            if (userEncotrado !== null) {
-                res.status(200).json(userEncotrado);
+            const senhaCripto = bcrypt.hashSync(senha.trim(), salt);
+
+            const procuraUser = await users.findOne({ email });
+
+            if (procuraUser === null) {
+                const novoUser = await users.create({
+                    email: email.trim(),
+                    apelido: apelido.trim(),
+                    senha: senhaCripto,
+                });
+
+                res.status(201).json({
+                    message: "Usuário criado com sucesso",
+                    novoUser,
+                });
             } else {
-                res.status(200).json({
-                    message: "Esse apelido não foi cadastrado",
+                res.status(500).json({
+                    message: "Email já cadastrado",
                 });
             }
         } catch (erro) {
             res.status(500).json({
-                message: "Problema na função de achar por nome",
+                message: "Algo deu errado",
+                erro,
             });
+        }
+    };
+
+    static listarUserByEmail = async (req, res) => {
+        const email = req.params.email;
+        try {
+            const userEncotrado = await users.findOne(
+                { email: email.trim() },
+                { senha: 0 }
+            );
+            if (userEncotrado !== null) {
+                res.status(200).json(userEncotrado);
+            } else {
+                res.status(200).json({
+                    message: "Esse email não foi cadastrado",
+                });
+            }
+        } catch (erro) {
+            res.status(500).json({
+                message: "Problema na função de achar por email",
+            });
+        }
+    };
+
+    static logarUser = async (req, res) => {
+        try {
+            const { email, senha } = req.body;
+            const usuarioEncontrado = await users.findOne({
+                email: email.trim(),
+            });
+
+            const senhaCorreta = await bcrypt.compare(
+                senha,
+                usuarioEncontrado.senha
+            );
+            if (senhaCorreta) {
+                res.status(200).json({ autorizado: senhaCorreta });
+            } else {
+                res.status(500).json({
+                    autorizado: senhaCorreta,
+                    message: "Senha e/ou email incorretos",
+                });
+            }
+        } catch (erro) {
+            res.status(500).json({ message: "Função logar com problema" });
         }
     };
 }

@@ -5,7 +5,8 @@ const router = express.Router();
 
 router
     .get("/users", UserController.listarUsers)
-    .get("/users/:apelido", UserController.listarUserByApelido)
+    .get("/users/logar", UserController.logarUser)
+    .get("/users/:email", UserController.listarUserByEmail)
     .post("/users", UserController.criaUser);
 
 export default router;
